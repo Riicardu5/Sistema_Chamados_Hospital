@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel TI - Chamados</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">Hospital</p>
+      <h1>Painel de Chamados TI</h1>
+    </div>
+  </header>
+
+  <main>
+    <section id="login-section" class="auth-card">
+      <div>
+        <p class="eyebrow">Acesso restrito</p>
+        <h2>Entrar no painel do TI</h2>
+        <p>Somente usuarios autorizados conseguem ver e atualizar chamados.</p>
+      </div>
+      <form id="login-form" class="login-form">
+        <label>
+          Usuario
+          <input name="username" type="text" autocomplete="username" required placeholder="Ex: ti">
+        </label>
+        <label>
+          Senha
+          <input name="password" type="password" autocomplete="current-password" required placeholder="Ex: 1234">
+        </label>
+        <button type="submit" class="primary">Entrar</button>
+        <p id="login-message" class="form-message" role="status"></p>
+      </form>
+    </section>
+
+    <section id="force-password-section" class="auth-card hidden">
+      <div>
+        <p class="eyebrow">Senha temporaria</p>
+        <h2>Escolha uma nova senha</h2>
+        <p>O TI definiu uma senha padrao. Para continuar, crie sua senha definitiva.</p>
+      </div>
+      <form id="force-password-form" class="login-form">
+        <label>
+          Nova senha
+          <input name="newPassword" type="password" autocomplete="new-password" required>
+        </label>
+        <button type="submit" class="primary">Salvar nova senha</button>
+        <p id="force-password-message" class="form-message" role="status"></p>
+      </form>
+    </section>
+
+    <section id="dashboard" class="screen active app-area hidden" aria-labelledby="dashboard-title">
+      <div class="userbar">
+        <span id="current-user"></span>
+        <div class="userbar-actions">
+          <button id="profile-toggle" class="icon-button" type="button" aria-label="Meus dados" title="Meus dados">👤</button>
+          <button id="logout-button" type="button">Sair</button>
+        </div>
+      </div>
+      <section id="profile-panel" class="profile-card hidden">
+        <div class="column-title">
+          <h3>Meus dados</h3>
+          <span>Atualize seus contatos</span>
+        </div>
+        <form id="profile-form" class="ticket-form compact-form">
+          <label>
+            Nome completo
+            <input name="name" type="text" required>
+          </label>
+          <label>
+            Email
+            <input name="email" type="email" required>
+          </label>
+          <label>
+            Celular
+            <input name="phone" type="tel" required>
+          </label>
+          <button type="submit" class="primary">Salvar meus dados</button>
+          <p id="profile-message" class="form-message" role="status"></p>
+        </form>
+      </section>
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Telao TI</p>
+          <h2 id="dashboard-title">Acompanhamento de chamados</h2>
+        </div>
+        <div class="filters">
+          <label>
+            Movimentados em
+            <input id="date-filter" type="date">
+          </label>
+          <button id="today-filter" type="button">Hoje</button>
+          <button id="clear-filter" type="button">Todos</button>
+        </div>
+      </div>
+
+      <div class="stats" aria-label="Resumo dos chamados">
+        <div>
+          <span id="open-count">0</span>
+          <p>em acompanhamento</p>
+        </div>
+        <div>
+          <span id="done-count">0</span>
+          <p>movimentados no filtro</p>
+        </div>
+        <div>
+          <span id="urgent-count">0</span>
+          <p>urgentes abertos</p>
+        </div>
+      </div>
+
+      <div class="admin-actions">
+        <div class="admin-control">
+          <button class="panel-toggle" type="button" data-panel-target="analytics-panel">Dashboards</button>
+          <section id="analytics-panel" class="analytics-panel hidden">
+            <div class="column-title">
+              <h3>Dashboards</h3>
+              <span>Levantamentos gerais de chamados</span>
+            </div>
+
+            <div class="analytics-grid">
+              <article class="analytics-card">
+                <div class="analytics-head">
+                  <div>
+                    <p class="eyebrow">Funcionarios</p>
+                    <h4>Solicitacoes abertas</h4>
+                  </div>
+                  <strong id="employee-total">0</strong>
+                </div>
+                <div class="chart-grid">
+                  <div>
+                    <h5>Tipos mais recorrentes</h5>
+                    <div id="employee-type-pie" class="pie-chart"></div>
+                    <div id="employee-type-list" class="rank-list"></div>
+                  </div>
+                  <div>
+                    <h5>Contas que mais abriram chamados</h5>
+                    <div id="employee-user-pie" class="pie-chart"></div>
+                    <div id="employee-user-list" class="rank-list"></div>
+                  </div>
+                </div>
+              </article>
+
+              <article class="analytics-card">
+                <div class="analytics-head">
+                  <div>
+                    <p class="eyebrow">TI</p>
+                    <h4>Chamados movimentados</h4>
+                  </div>
+                  <strong id="ti-total">0</strong>
+                </div>
+                <div class="chart-grid">
+                  <div>
+                    <h5>Movimentados por pessoa</h5>
+                    <div id="ti-person-pie" class="pie-chart"></div>
+                    <div id="ti-person-list" class="rank-list"></div>
+                  </div>
+                  <div>
+                    <h5>Tipos movimentados por pessoa</h5>
+                    <div id="ti-person-type-list" class="rank-list wide"></div>
+                  </div>
+                  <div>
+                    <h5>Situacao dos chamados movimentados</h5>
+                    <div id="ti-status-pie" class="pie-chart"></div>
+                    <div id="ti-status-list" class="rank-list"></div>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </section>
+        </div>
+
+        <div class="admin-control">
+          <button class="panel-toggle" type="button" data-panel-target="users-panel">Usuarios</button>
+          <section id="users-panel" class="users-panel hidden">
+            <div class="column-title">
+              <h3>Usuarios</h3>
+              <span>Criar usuarios e resetar senha</span>
+            </div>
+            <form id="create-user-form" class="ticket-form compact-form">
+              <label>
+                Nome completo
+                <input name="name" type="text" required>
+              </label>
+              <label>
+                Email
+                <input name="email" type="email" required>
+              </label>
+              <label>
+                Celular
+                <input name="phone" type="tel" required>
+              </label>
+              <label>
+                Usuario
+                <input name="username" type="text" required>
+              </label>
+              <label>
+                Senha inicial
+                <input name="password" type="text" value="Hospital@123" required>
+              </label>
+              <label>
+                Tipo de usuario
+                <select name="role" required>
+                  <option value="user">Usuario comum</option>
+                  <option value="ti">TI</option>
+                </select>
+              </label>
+              <button type="submit" class="primary">Criar usuario</button>
+              <p id="create-user-message" class="form-message" role="status"></p>
+            </form>
+            <div class="search-row inline-search">
+              <label>
+                Pesquisar usuarios
+                <input id="user-search" type="search" placeholder="Nome, usuario, email ou celular">
+              </label>
+            </div>
+            <div id="user-list" class="user-list"></div>
+          </section>
+        </div>
+
+        <div class="admin-control">
+          <button class="panel-toggle" type="button" data-panel-target="reset-panel">
+            Pedidos de senha <span id="reset-badge" class="badge hidden">0</span>
+          </button>
+          <section id="reset-panel" class="users-panel hidden">
+            <div class="column-title">
+              <h3>Pedidos de nova senha</h3>
+              <span>Senha padrao: Hospital@123</span>
+            </div>
+            <div id="reset-request-list" class="user-list"></div>
+          </section>
+        </div>
+      </div>
+
+      <div class="search-row ticket-search-row">
+        <label>
+          Pesquisar pelo numero, nome, email ou telefone
+          <input id="ticket-search" type="search" placeholder="Ex: 1001, Ana ou celular">
+        </label>
+      </div>
+
+      <div class="board">
+        <section class="column">
+          <div class="column-title">
+            <h3>Chamados abertos</h3>
+            <span>Ainda sem movimentacao do TI</span>
+          </div>
+          <div id="open-list" class="ticket-list"></div>
+        </section>
+
+        <section class="column">
+          <div class="column-title">
+            <h3>Movimentados / concluidos</h3>
+            <span id="done-filter-label">Todos</span>
+          </div>
+          <div id="done-list" class="ticket-list"></div>
+        </section>
+      </div>
+
+    </section>
+  </main>
+
+  <footer class="signature">
+    <span>Sistema base desenvolvido por Carvalho</span>
+    <span>Atualizacao automatica a cada 15 segundos</span>
+  </footer>
+
+  <template id="ticket-template">
+    <article class="ticket-card">
+      <div class="ticket-main">
+        <div>
+          <strong class="ticket-title"></strong>
+          <p class="ticket-meta"></p>
+        </div>
+        <span class="priority"></span>
+      </div>
+      <span class="status-badge"></span>
+      <p class="ticket-description"></p>
+      <div class="ticket-footer">
+        <span class="ticket-time"></span>
+        <div class="ticket-actions"></div>
+      </div>
+    </article>
+  </template>
+
+  <script src="app.js?v=20260601-11"></script>
+</body>
+</html>

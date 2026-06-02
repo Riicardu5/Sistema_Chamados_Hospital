@@ -1,0 +1,82 @@
+[
+  {
+    "id": "d5a81fc1-56bf-44b2-a146-63f73c76a4ec",
+    "userId": "u-ti",
+    "username": "ti",
+    "name": "Equipe TI",
+    "email": "ti@hospital.local",
+    "phone": "(00) 00000-0000",
+    "status": "resolved",
+    "createdAt": "2026-06-01T23:59:10.305Z",
+    "resolvedAt": "2026-06-01T23:59:29.229Z",
+    "resolvedBy": {
+      "id": "u-ti",
+      "username": "ti",
+      "name": "Equipe TI",
+      "email": "ti@hospital.local",
+      "phone": "(00) 00000-0000",
+      "role": "ti",
+      "mustChangePassword": false
+    }
+  },
+  {
+    "id": "604dcb3e-ff62-4dda-b960-9d394a706284",
+    "userId": "7e47a842-82c8-47be-a63a-92153819b359",
+    "username": "cleiton",
+    "name": "cleiton",
+    "email": "cleiton@gmail.com",
+    "phone": "12313456",
+    "status": "resolved",
+    "createdAt": "2026-06-01T23:59:03.795Z",
+    "resolvedAt": "2026-06-01T23:59:32.388Z",
+    "resolvedBy": {
+      "id": "u-ti",
+      "username": "ti",
+      "name": "Equipe TI",
+      "email": "ti@hospital.local",
+      "phone": "(00) 00000-0000",
+      "role": "ti",
+      "mustChangePassword": true
+    }
+  },
+  {
+    "id": "a8c637e2-c187-49d5-8d59-2696eb1fc5c6",
+    "userId": "7e47a842-82c8-47be-a63a-92153819b359",
+    "username": "cleiton",
+    "name": "cleiton",
+    "email": "cleiton@gmail.com",
+    "phone": "12313456",
+    "status": "resolved",
+    "createdAt": "2026-06-01T23:13:01.344Z",
+    "resolvedAt": "2026-06-01T23:24:23.731Z",
+    "resolvedBy": {
+      "id": "u-ti",
+      "username": "ti",
+      "name": "Equipe TI",
+      "email": "ti@hospital.local",
+      "phone": "(00) 00000-0000",
+      "role": "ti",
+      "mustChangePassword": false
+    }
+  },
+  {
+    "id": "cb6fe300-a5fc-4d3f-944c-47b4ed047fed",
+    "userId": "7e47a842-82c8-47be-a63a-92153819b359",
+    "username": "cleiton",
+    "name": "cleiton",
+    "email": "cleiton@gmail.com",
+    "phone": "12313456",
+    "status": "resolved",
+    "createdAt": "2026-06-01T22:05:16.808Z",
+    "resolvedAt": "2026-06-01T22:05:23.463Z",
+    "resolvedBy": {
+      "id": "u-ti",
+      "username": "ti",
+      "name": "Equipe TI",
+      "email": "ti@hospital.local",
+      "phone": "(00) 00000-0000",
+      "role": "ti",
+      "mustChangePassword": false
+    }
+  }
+]

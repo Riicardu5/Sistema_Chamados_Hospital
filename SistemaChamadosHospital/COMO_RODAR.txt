@@ -1,0 +1,125 @@
+COMO RODAR O SISTEMA DE CHAMADOS NA REDE LOCAL
+
+1. Escolha um computador para ser o servidor.
+   Esse computador precisa ficar ligado enquanto o sistema estiver em uso.
+
+2. Copie a pasta "outputs" inteira para esse computador.
+
+3. Instale o Node.js nesse computador, se ainda nao tiver.
+   Baixe em: https://nodejs.org/
+   Pode instalar a versao LTS.
+
+4. Dentro da pasta outputs, clique duas vezes em:
+   iniciar-servidor.bat
+
+5. No computador servidor, abra:
+   http://localhost:8765/index.html
+   para abrir chamado.
+
+   http://localhost:8765/painel.html
+   para o painel do TI.
+
+6. Para outras maquinas do hospital acessarem:
+   descubra o IP do computador servidor.
+
+   No computador servidor, abra o PowerShell ou Prompt e rode:
+   ipconfig
+
+   Procure o IPv4, algo parecido com:
+   192.168.1.50
+
+7. Nas outras maquinas, acesse:
+   http://IP-DO-SERVIDOR:8765/index.html
+
+   Exemplo:
+   http://192.168.1.50:8765/index.html
+
+8. No telao do TI, acesse:
+   http://IP-DO-SERVIDOR:8765/painel.html
+
+USUARIOS DE TESTE
+
+Usuario comum, para abrir chamado:
+  usuario: funcionario
+  senha: 1234
+
+Usuario do TI, para ver o painel:
+  usuario: ti
+  senha: 1234
+
+NOVAS CONTAS
+
+Na tela de login de abertura de chamado existe o botao:
+  Criar conta
+
+O funcionario informa:
+  nome completo
+  email
+  celular
+  usuario
+  senha
+
+Email e celular sao obrigatorios.
+Esses dados aparecem no chamado para o TI conseguir entrar em contato.
+Oriente o funcionario a acompanhar email e celular ate a resolucao do problema.
+
+ALTERAR DADOS E SENHA
+
+Depois de entrar na tela de abertura de chamado, o funcionario pode atualizar:
+  nome
+  email
+  celular
+
+RESET DE SENHA PELO TI
+
+Na tela de login de abertura de chamado existe:
+  Esqueci minha senha
+
+O funcionario informa somente o usuario.
+Esse pedido aparece no painel do TI em:
+  Pedidos de nova senha
+
+Quando o TI libera, a senha temporaria fica:
+  Hospital@123
+
+Ao entrar com essa senha, o usuario e obrigado a escolher uma nova senha.
+
+CRIAR USUARIOS PELO TI
+
+No painel do TI existe a area Usuarios.
+Ali o TI pode criar:
+  Usuario comum
+  Usuario TI
+
+Todo usuario criado pelo TI precisa trocar a senha no primeiro login.
+Tambem existe busca de usuarios por nome, usuario, email ou celular.
+O TI pode deletar usuarios que nao devem mais acessar o sistema.
+
+PESQUISA NO PAINEL
+
+No painel do TI, a pesquisa procura por:
+  numero do chamado
+  nome
+  email
+  telefone ou ramal
+  usuario
+
+Quando voce pesquisa pelo numero, o sistema procura tambem nos chamados antigos/concluidos,
+mesmo que o filtro de data esteja em outro dia.
+
+Para editar ou criar outros usuarios, abra:
+  outputs\data\users.json
+
+Tipos de usuario:
+  "role": "user"  -> abre chamado e ve somente os proprios chamados
+  "role": "ti"    -> ve o painel, pesquisa e altera status dos chamados
+
+IMPORTANTE
+
+- Todos precisam estar na mesma rede local do hospital.
+- O computador servidor precisa ficar ligado.
+- Se o Windows perguntar sobre Firewall, permita acesso em rede privada.
+- Os chamados ficam salvos em:
+  outputs\data\tickets.json
+
+- Faca backup desse arquivo de vez em quando.
