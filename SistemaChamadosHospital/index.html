@@ -3,14 +3,26 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Chamados TI - Hospital</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta name="theme-color" content="#005f34">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Chamados TI">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Chamados TI - Generico</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css?v=20260603-24">
 </head>
 <body>
   <header class="topbar">
-    <div>
-      <p class="eyebrow">Hospital</p>
-      <h1>Central de Chamados TI</h1>
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <span>T</span><span>I</span>
+      </div>
+      <div>
+        <p class="eyebrow">Instituicao Exemplo</p>
+        <h1>Central de Chamados TI</h1>
+      </div>
     </div>
   </header>
 
@@ -20,6 +32,7 @@
         <p class="eyebrow">Acesso</p>
         <h2>Entrar para abrir chamado</h2>
         <p>Use seu usuario para abrir chamados e acompanhar tudo que voce ja solicitou. Fique atento ao email e celular cadastrados, pois o TI pode usar esses contatos para resolver o problema.</p>
+        <p class="support-note">Se o sistema estiver fora do ar ou voce nao conseguir abrir chamado, envie email para <strong>suporte@empresa.com.br</strong>.</p>
       </div>
       <div class="auth-forms">
         <form id="login-form" class="login-form">
@@ -79,7 +92,7 @@
       <div>
         <p class="eyebrow">Senha temporaria</p>
         <h2>Escolha uma nova senha</h2>
-        <p>O TI definiu uma senha padrao. Para continuar, crie sua senha definitiva.</p>
+        <p>O TI definiu a senha padrao do TI. Para continuar, crie sua senha definitiva.</p>
       </div>
       <form id="force-password-form" class="login-form">
         <label>
@@ -96,6 +109,28 @@
         <span id="current-user"></span>
         <div class="userbar-actions">
           <button id="profile-toggle" class="icon-button" type="button" aria-label="Meus dados" title="Meus dados">👤</button>
+          <section id="profile-panel" class="profile-card userbar-dropdown hidden">
+            <div class="column-title">
+              <h3>Meus dados</h3>
+              <span>Atualize seus contatos</span>
+            </div>
+            <form id="profile-form" class="ticket-form compact-form">
+              <label>
+                Nome completo
+                <input name="name" type="text" required>
+              </label>
+              <label>
+                Email
+                <input name="email" type="email" required>
+              </label>
+              <label>
+                Celular
+                <input name="phone" type="tel" required>
+              </label>
+              <button type="submit" class="primary">Salvar meus dados</button>
+              <p id="profile-message" class="form-message" role="status"></p>
+            </form>
+          </section>
           <button id="logout-button" type="button">Sair</button>
         </div>
       </div>
@@ -107,6 +142,10 @@
           <div class="contact-warning">
             <strong>Importante</strong>
             <p>Fique de olho no seu celular e email cadastrados. O TI pode precisar falar com voce por esses contatos para pedir detalhes, combinar atendimento ou avisar a resolucao do chamado.</p>
+            <p>Se nao conseguir abrir chamado, acione o suporte por email: suporte@empresa.com.br</p>
+            <div class="support-actions">
+              <a class="support-email-button" href="https://mail.google.com/mail/?view=cm&fs=1&to=suporte@empresa.com.br&su=Suporte%20-%20Central%20de%20Chamados%20TI" target="_blank" rel="noopener">Abrir Gmail para suporte</a>
+            </div>
           </div>
         </div>
 
@@ -122,6 +161,7 @@
               <option value="Normal">Normal</option>
               <option value="Alta">Alta</option>
               <option value="Urgente">Urgente</option>
+              <option value="Demanda" data-ti-only="true">Demanda</option>
             </select>
           </label>
 
@@ -142,33 +182,16 @@
             <textarea name="description" rows="5" required placeholder="Conte o que esta acontecendo, equipamento, sala e qualquer detalhe importante."></textarea>
           </label>
 
+          <label class="span-2">
+            Foto do problema (opcional)
+            <input name="image" type="file" accept="image/*" capture="environment">
+            <small>Use quando ajudar o TI a entender o problema. Limite: 5 MB.</small>
+          </label>
+
           <button type="submit" class="primary">Enviar chamado</button>
           <p id="form-message" class="form-message" role="status"></p>
         </form>
       </div>
-
-      <section id="profile-panel" class="profile-card hidden">
-        <div class="column-title">
-          <h3>Meus dados</h3>
-          <span>Atualize seus contatos</span>
-        </div>
-        <form id="profile-form" class="ticket-form compact-form">
-          <label>
-            Nome completo
-            <input name="name" type="text" required>
-          </label>
-          <label>
-            Email
-            <input name="email" type="email" required>
-          </label>
-          <label>
-            Celular
-            <input name="phone" type="tel" required>
-          </label>
-          <button type="submit" class="primary">Salvar meus dados</button>
-          <p id="profile-message" class="form-message" role="status"></p>
-        </form>
-      </section>
 
       <section class="history">
         <div class="column-title">
@@ -181,7 +204,8 @@
   </main>
 
   <footer class="signature">
-    <span>Sistema base desenvolvido por Carvalho</span>
+    <span>Instituicao Exemplo - Cidade/UF</span>
+    <span>Base desenvolvida por Riicardu5</span>
     <span>Atualizacao automatica a cada 15 segundos</span>
   </footer>
 
@@ -203,6 +227,6 @@
     </article>
   </template>
 
-  <script src="app.js?v=20260601-11"></script>
+  <script src="app.js?v=20260603-22"></script>
 </body>
 </html>

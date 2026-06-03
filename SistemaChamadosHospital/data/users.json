@@ -4,7 +4,7 @@
     "username": "funcionario",
     "password": "1234",
     "name": "Usuario Teste",
-    "email": "funcionario@hospital.local",
+    "email": "funcionario@exemplo.local",
     "phone": "(00) 00000-0000",
     "role": "user",
     "mustChangePassword": false
@@ -14,28 +14,8 @@
     "username": "ti",
     "password": "1234",
     "name": "Equipe TI",
-    "email": "ti@hospital.local",
+    "email": "ti@exemplo.local",
     "phone": "(00) 00000-0000",
-    "role": "ti",
-    "mustChangePassword": false
-  },
-  {
-    "id": "7e47a842-82c8-47be-a63a-92153819b359",
-    "username": "cleiton",
-    "password": "Hospital@123",
-    "name": "cleiton",
-    "email": "cleiton@gmail.com",
-    "phone": "12313456",
-    "role": "user",
-    "mustChangePassword": true
-  },
-  {
-    "id": "c6023576-61d7-4e91-a71f-7b56ca4ce7d7",
-    "username": "ricardo",
-    "password": "Maconha123@",
-    "name": "RICARDO DE CARVALHO",
-    "email": "carvalhoricardo123@gmail.com",
-    "phone": "47991676327",
     "role": "ti",
     "mustChangePassword": false
   }

@@ -1,8 +1,13 @@
-const AUTH_KEY = "hospital-ti-auth";
+﻿const AUTH_KEY = "hospital-ti-auth";
 const REFRESH_INTERVAL_MS = 15000;
+
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  navigator.serviceWorker.register("/sw.js").catch(() => {});
+}
 
 const form = document.querySelector("#ticket-form");
 const formMessage = document.querySelector("#form-message");
+const prioritySelect = document.querySelector("select[name='priority']");
 const loginSection = document.querySelector("#login-section");
 const loginForm = document.querySelector("#login-form");
 const loginMessage = document.querySelector("#login-message");
@@ -23,6 +28,8 @@ const profileToggle = document.querySelector("#profile-toggle");
 const profilePanel = document.querySelector("#profile-panel");
 const createUserForm = document.querySelector("#create-user-form");
 const createUserMessage = document.querySelector("#create-user-message");
+const computerForm = document.querySelector("#computer-form");
+const computerMessage = document.querySelector("#computer-message");
 const appArea = document.querySelector(".app-area");
 const currentUserLabel = document.querySelector("#current-user");
 const logoutButton = document.querySelector("#logout-button");
@@ -35,13 +42,24 @@ const todayFilter = document.querySelector("#today-filter");
 const clearFilter = document.querySelector("#clear-filter");
 const ticketSearch = document.querySelector("#ticket-search");
 const userSearch = document.querySelector("#user-search");
+const computerSearch = document.querySelector("#computer-search");
+const analyticsPeriod = document.querySelector("#analytics-period");
+const analyticsDay = document.querySelector("#analytics-day");
+const analyticsWeek = document.querySelector("#analytics-week");
+const analyticsMonth = document.querySelector("#analytics-month");
+const analyticsDayField = document.querySelector("#analytics-day-field");
+const analyticsWeekField = document.querySelector("#analytics-week-field");
+const analyticsMonthField = document.querySelector("#analytics-month-field");
 const openCount = document.querySelector("#open-count");
 const doneCount = document.querySelector("#done-count");
 const urgentCount = document.querySelector("#urgent-count");
 const doneFilterLabel = document.querySelector("#done-filter-label");
 const userList = document.querySelector("#user-list");
+const computerList = document.querySelector("#computer-list");
 const resetRequestList = document.querySelector("#reset-request-list");
 const resetBadge = document.querySelector("#reset-badge");
+const clearAttachmentsButton = document.querySelector("#clear-attachments-button");
+const clearAttachmentsMessage = document.querySelector("#clear-attachments-message");
 const panelToggles = document.querySelectorAll(".panel-toggle");
 const employeeTotal = document.querySelector("#employee-total");
 const employeeTypePie = document.querySelector("#employee-type-pie");
@@ -75,6 +93,7 @@ const CHART_COLORS = ["#146c94", "#198754", "#b7791f", "#7654a6", "#c24135", "#3
 
 let tickets = [];
 let users = [];
+let computers = [];
 let resetRequests = [];
 let auth = loadAuth();
 
@@ -271,7 +290,7 @@ createUserForm?.addEventListener("submit", async (event) => {
     if (!response.ok) throw new Error(result.error);
     users = result;
     createUserForm.reset();
-    createUserForm.elements.password.value = "Hospital@123";
+    createUserForm.elements.password.value = "Chamados@123";
     createUserMessage.textContent = "Usuario criado. Ele deve trocar a senha no primeiro login.";
     renderUsers();
   } catch (error) {
@@ -279,38 +298,78 @@ createUserForm?.addEventListener("submit", async (event) => {
   }
 });
 
-form?.addEventListener("submit", async (event) => {
+computerForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const data = new FormData(form);
+  const data = new FormData(computerForm);
 
   try {
-    const response = await fetch("/api/tickets", {
+    const response = await fetch("/api/computers", {
       method: "POST",
       headers: authHeaders(),
       body: JSON.stringify({
-        department: data.get("department"),
-        priority: data.get("priority"),
-        category: data.get("category"),
+        patrimonio: data.get("patrimonio"),
+        anydesk: data.get("anydesk"),
+        os: data.get("os"),
+        sector: data.get("sector"),
+        specs: data.get("specs"),
+        licenses: data.get("licenses"),
+        location: data.get("location"),
         description: data.get("description"),
       }),
     });
 
-    if (!response.ok) throw new Error("Erro ao salvar chamado");
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error);
+    computers = result;
+    computerForm.reset();
+    computerMessage.textContent = "Computador cadastrado no inventario.";
+    renderComputers();
+  } catch (error) {
+    computerMessage.textContent = error.message || "Nao foi possivel cadastrar computador.";
+  }
+});
+
+form?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const data = new FormData(form);
+  const image = data.get("image");
+
+  if (image?.size > 5 * 1024 * 1024) {
+    formMessage.textContent = "A foto precisa ter no maximo 5 MB.";
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/tickets", {
+      method: "POST",
+      headers: authOnlyHeaders(),
+      body: data,
+    });
+
     const ticket = await response.json();
+    if (!response.ok) throw new Error(ticket.error || "Erro ao salvar chamado");
     form.reset();
     formMessage.textContent = `Chamado ${ticket.ticketNumber} enviado com sucesso.`;
     setTimeout(() => {
       formMessage.textContent = "";
     }, 5000);
     await loadMyTickets();
-  } catch {
-    formMessage.textContent = "Nao foi possivel enviar. Confira o login e tente novamente.";
+  } catch (error) {
+    formMessage.textContent = error.message || "Nao foi possivel enviar. Confira o login e tente novamente.";
   }
 });
 
 dateFilter?.addEventListener("change", renderDashboard);
 ticketSearch?.addEventListener("input", renderDashboard);
 userSearch?.addEventListener("input", renderUsers);
+computerSearch?.addEventListener("input", renderComputers);
+analyticsPeriod?.addEventListener("change", () => {
+  updateAnalyticsFilterFields();
+  renderAnalytics();
+});
+analyticsDay?.addEventListener("change", renderAnalytics);
+analyticsWeek?.addEventListener("change", renderAnalytics);
+analyticsMonth?.addEventListener("change", renderAnalytics);
 
 todayFilter?.addEventListener("click", () => {
   dateFilter.value = formatDateInput(new Date());
@@ -320,6 +379,32 @@ todayFilter?.addEventListener("click", () => {
 clearFilter?.addEventListener("click", () => {
   dateFilter.value = "";
   renderDashboard();
+});
+
+clearAttachmentsButton?.addEventListener("click", async () => {
+  const confirmed = confirm(
+    "Tem certeza que deseja apagar TODAS as imagens anexadas aos chamados? Os chamados continuam salvos, mas as fotos serao removidas."
+  );
+
+  if (!confirmed) return;
+
+  clearAttachmentsButton.disabled = true;
+  clearAttachmentsMessage.textContent = "Limpando imagens...";
+
+  try {
+    const response = await fetch("/api/attachments", {
+      method: "DELETE",
+      headers: authHeaders(),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error);
+    clearAttachmentsMessage.textContent = `${result.deletedFiles} imagem(ns) apagada(s). Chamados atualizados: ${result.updatedTickets}.`;
+    await loadDashboard();
+  } catch (error) {
+    clearAttachmentsMessage.textContent = error.message || "Nao foi possivel limpar as imagens.";
+  } finally {
+    clearAttachmentsButton.disabled = false;
+  }
 });
 
 function loadAuth() {
@@ -334,6 +419,12 @@ function saveAuth() {
 function authHeaders() {
   return {
     "Content-Type": "application/json",
+    Authorization: `Bearer ${auth.token}`,
+  };
+}
+
+function authOnlyHeaders() {
+  return {
     Authorization: `Bearer ${auth.token}`,
   };
 }
@@ -372,6 +463,7 @@ async function startApp() {
   appArea?.classList.remove("hidden");
   updateCurrentUserLabel();
   fillProfile();
+  updatePriorityOptions();
 
   if (openList || doneList) {
     if (auth.user.role !== "ti") {
@@ -380,15 +472,31 @@ async function startApp() {
     }
     await loadDashboard();
     await loadUsers();
+    await loadComputers();
     await loadResetRequests();
+    updateAnalyticsFilterFields();
     setInterval(loadDashboard, REFRESH_INTERVAL_MS);
     setInterval(loadResetRequests, REFRESH_INTERVAL_MS);
     setInterval(loadUsers, REFRESH_INTERVAL_MS * 4);
+    setInterval(loadComputers, REFRESH_INTERVAL_MS * 4);
   }
 
   if (myTicketList) {
     await loadMyTickets();
     setInterval(loadMyTickets, REFRESH_INTERVAL_MS);
+  }
+}
+
+function updatePriorityOptions() {
+  if (!prioritySelect || !auth?.user) return;
+
+  prioritySelect.querySelectorAll("[data-ti-only='true']").forEach((option) => {
+    option.hidden = auth.user.role !== "ti";
+    option.disabled = auth.user.role !== "ti";
+  });
+
+  if (auth.user.role !== "ti" && prioritySelect.value === "Demanda") {
+    prioritySelect.value = "Normal";
   }
 }
 
@@ -442,6 +550,14 @@ async function loadUsers() {
   renderUsers();
 }
 
+async function loadComputers() {
+  if (!computerList) return;
+  const response = await fetch("/api/computers", { headers: authHeaders() });
+  if (!response.ok) return;
+  computers = await response.json();
+  renderComputers();
+}
+
 async function loadResetRequests() {
   if (!resetRequestList) return;
   const response = await fetch("/api/password-reset-requests", { headers: authHeaders() });
@@ -468,11 +584,11 @@ function renderDashboard() {
   });
 
   const openTickets = searchedTickets
-    .filter((ticket) => ticket.status === "open")
+    .filter((ticket) => ticket.status === "open" || ticket.status === "in_progress")
     .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
   const filteredDoneTickets = searchedTickets
-    .filter((ticket) => ticket.status !== "open")
+    .filter((ticket) => ticket.status !== "open" && ticket.status !== "in_progress")
     .filter((ticket) => {
       if (search) return true;
       if (!dateFilter.value) return true;
@@ -485,18 +601,20 @@ function renderDashboard() {
   urgentCount.textContent = openTickets.filter((ticket) => ticket.priority === "Urgente").length;
   doneFilterLabel.textContent = dateFilter.value ? formatDateText(dateFilter.value) : "Todos";
 
-  renderList(openList, openTickets, "Nenhum chamado aberto no momento.", true);
+  renderList(openList, openTickets, "Nenhum chamado aberto ou em andamento no momento.", true);
   renderList(doneList, filteredDoneTickets, "Nenhum chamado movimentado para este filtro.", true);
 }
 
 function renderAnalytics() {
   if (!employeeTotal) return;
 
-  const totalTickets = tickets.length;
-  const completedTickets = tickets.filter((ticket) => ticket.status === "done");
-  const movedTickets = tickets.filter((ticket) => ticket.status !== "open");
-  const typeCounts = countBy(tickets, (ticket) => ticket.category || "Outro");
-  const requesterCounts = countBy(tickets, (ticket) => ticket.requester || ticket.openedBy?.username || "Sem nome");
+  const employeeTickets = tickets.filter((ticket) => matchesAnalyticsPeriod(ticket.createdAt));
+  const movedTickets = tickets
+    .filter((ticket) => ticket.status !== "open" && ticket.status !== "in_progress")
+    .filter((ticket) => matchesAnalyticsPeriod(ticket.completedAt || ticket.statusUpdatedAt || ticket.createdAt));
+  const totalTickets = employeeTickets.length;
+  const typeCounts = countBy(employeeTickets, (ticket) => ticket.category || "Outro");
+  const requesterCounts = countBy(employeeTickets, (ticket) => ticket.requester || ticket.openedBy?.username || "Sem nome");
   const tiCounts = countBy(movedTickets, getTicketResponsibleName);
   const movedStatusCounts = countBy(movedTickets, (ticket) => STATUS_LABELS[ticket.status] || ticket.status);
 
@@ -512,6 +630,36 @@ function renderAnalytics() {
   renderTiPersonTypes(tiPersonTypeList, movedTickets);
   renderPie(tiStatusPie, movedStatusCounts);
   renderRankList(tiStatusList, movedStatusCounts, movedTickets.length);
+}
+
+function updateAnalyticsFilterFields() {
+  const period = analyticsPeriod?.value || "all";
+  analyticsDayField?.classList.toggle("hidden", period !== "day");
+  analyticsWeekField?.classList.toggle("hidden", period !== "week");
+  analyticsMonthField?.classList.toggle("hidden", period !== "month");
+}
+
+function matchesAnalyticsPeriod(dateText) {
+  const period = analyticsPeriod?.value || "all";
+  if (period === "all") return true;
+  if (!dateText) return false;
+
+  const date = new Date(dateText);
+  if (Number.isNaN(date.getTime())) return false;
+
+  if (period === "day") {
+    return analyticsDay?.value ? formatDateInput(date) === analyticsDay.value : true;
+  }
+
+  if (period === "month") {
+    return analyticsMonth?.value ? formatMonthInput(date) === analyticsMonth.value : true;
+  }
+
+  if (period === "week") {
+    return analyticsWeek?.value ? formatWeekInput(date) === analyticsWeek.value : true;
+  }
+
+  return true;
 }
 
 function getTicketResponsibleName(ticket) {
@@ -704,6 +852,71 @@ function renderUsers() {
   });
 }
 
+function renderComputers() {
+  if (!computerList) return;
+  computerList.innerHTML = "";
+
+  const search = computerSearch?.value.trim().toLowerCase() || "";
+  const filteredComputers = computers.filter((computer) => {
+    if (!search) return true;
+    return [
+      computer.patrimonio,
+      computer.anydesk,
+      computer.os,
+      computer.sector,
+      computer.specs,
+      computer.licenses,
+      computer.location,
+      computer.description,
+    ].some((value) => String(value || "").toLowerCase().includes(search));
+  });
+
+  if (!filteredComputers.length) {
+    const empty = document.createElement("p");
+    empty.className = "empty";
+    empty.textContent = "Nenhum computador encontrado.";
+    computerList.append(empty);
+    return;
+  }
+
+  filteredComputers.forEach((computer) => {
+    const card = document.createElement("article");
+    card.className = "computer-card";
+    card.innerHTML = `
+      <div>
+        <strong>Patrimonio: ${escapeHtml(computer.patrimonio)}</strong>
+        <p><b>Setor:</b> ${escapeHtml(computer.sector || "-")} | <b>Local:</b> ${escapeHtml(computer.location || "-")}</p>
+        <p><b>AnyDesk:</b> ${escapeHtml(computer.anydesk || "-")} | <b>Sistema:</b> ${escapeHtml(computer.os || "-")}</p>
+        <p><b>Especificacoes:</b> ${escapeHtml(computer.specs || "-")}</p>
+        <p><b>Licencas:</b> ${escapeHtml(computer.licenses || "-")}</p>
+        <p><b>Descricao:</b> ${escapeHtml(computer.description || "-")}</p>
+      </div>
+      <button class="danger-button" type="button">Deletar computador</button>
+    `;
+
+    card.querySelector("button").addEventListener("click", async () => {
+      const confirmed = confirm(`Deletar o computador patrimonio ${computer.patrimonio}?`);
+      if (!confirmed) return;
+
+      const response = await fetch(`/api/computers/${computer.id}`, {
+        method: "DELETE",
+        headers: authHeaders(),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        alert(result.error || "Nao foi possivel deletar computador.");
+        return;
+      }
+
+      computers = result;
+      renderComputers();
+    });
+
+    computerList.append(card);
+  });
+}
+
 function renderResetRequests() {
   updateResetBadge();
   resetRequestList.innerHTML = "";
@@ -785,10 +998,41 @@ function renderList(container, list, emptyMessage, showActions) {
     `;
     card.querySelector(".ticket-description").after(contact);
 
+    if (ticket.statusNote) {
+      const note = document.createElement("div");
+      note.className = "status-note";
+      note.innerHTML = `<strong>Observacao do TI:</strong> ${escapeHtml(ticket.statusNote)}`;
+      contact.after(note);
+    }
+
+    if (ticket.attachment?.url) {
+      const attachment = document.createElement("a");
+      attachment.className = "attachment-link";
+      attachment.href = ticket.attachment.url;
+      attachment.target = "_blank";
+      attachment.rel = "noopener";
+      attachment.textContent = "Ver foto anexada";
+      (card.querySelector(".status-note") || contact).after(attachment);
+    }
+
+    if (showActions) {
+      const whatsappUrl = buildWhatsappUrl(ticket);
+      if (whatsappUrl) {
+        const whatsapp = document.createElement("a");
+        whatsapp.className = "whatsapp-link";
+        whatsapp.href = whatsappUrl;
+        whatsapp.target = "_blank";
+        whatsapp.rel = "noopener";
+        whatsapp.textContent = "Chamar no WhatsApp";
+        (card.querySelector(".attachment-link") || card.querySelector(".status-note") || contact).after(whatsapp);
+      }
+    }
+
     const priority = card.querySelector(".priority");
     priority.textContent = ticket.priority;
     priority.classList.toggle("alta", ticket.priority === "Alta");
     priority.classList.toggle("urgente", ticket.priority === "Urgente");
+    priority.classList.toggle("demanda", ticket.priority === "Demanda");
 
     const statusBadge = card.querySelector(".status-badge");
     statusBadge.textContent = STATUS_LABELS[ticket.status] || "Aberto";
@@ -836,6 +1080,20 @@ function buildMeta(ticket) {
   return parts.join(" | ");
 }
 
+function buildWhatsappUrl(ticket) {
+  const phone = String(ticket.requesterPhone || ticket.openedBy?.phone || "").replace(/\D/g, "");
+  if (!phone) return "";
+
+  const normalizedPhone = phone.startsWith("55") ? phone : `55${phone}`;
+  const message = [
+    `Ola, aqui e o TI da sua instituicao.`,
+    `Estou entrando em contato sobre o chamado #${ticket.ticketNumber}.`,
+    `Problema relatado: ${ticket.description}`,
+  ].join("\n");
+
+  return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
+}
+
 function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -858,16 +1116,29 @@ function renderActions(container, ticket) {
     button.className = "status-button";
     button.dataset.status = action.status;
     button.textContent = action.label;
-    button.addEventListener("click", () => updateTicketStatus(ticket.id, action.status));
+    button.addEventListener("click", () => {
+      const note = requestStatusNote(action.status);
+      if (note === null) return;
+      updateTicketStatus(ticket.id, action.status, note);
+    });
     container.append(button);
   });
 }
 
-async function updateTicketStatus(id, status) {
+function requestStatusNote(status) {
+  if (status === "open") {
+    return prompt("Observacao ao reabrir o chamado (opcional):") ?? null;
+  }
+
+  const label = STATUS_LABELS[status] || status;
+  return prompt(`Observacao para marcar como \"${label}\" (opcional):`) ?? null;
+}
+
+async function updateTicketStatus(id, status, note = "") {
   const response = await fetch(`/api/tickets/${id}`, {
     method: "PATCH",
     headers: authHeaders(),
-    body: JSON.stringify({ status }),
+    body: JSON.stringify({ status, note }),
   });
 
   if (!response.ok) return;
@@ -900,6 +1171,21 @@ function formatDateInput(date) {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function formatMonthInput(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
+}
+
+function formatWeekInput(date) {
+  const localDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const day = localDate.getDay() || 7;
+  localDate.setDate(localDate.getDate() + 4 - day);
+  const yearStart = new Date(localDate.getFullYear(), 0, 1);
+  const week = Math.ceil((((localDate - yearStart) / 86400000) + 1) / 7);
+  return `${localDate.getFullYear()}-W${String(week).padStart(2, "0")}`;
 }
 
 function formatDateText(value) {

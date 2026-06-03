@@ -1,16 +1,28 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#005f34">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Painel TI">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Painel TI - Chamados</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css?v=20260603-22">
 </head>
 <body>
   <header class="topbar">
-    <div>
-      <p class="eyebrow">Hospital</p>
-      <h1>Painel de Chamados TI</h1>
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <span>T</span><span>I</span>
+      </div>
+      <div>
+        <p class="eyebrow">Instituicao Exemplo</p>
+        <h1>Painel de Chamados TI</h1>
+      </div>
     </div>
   </header>
 
@@ -19,7 +31,7 @@
       <div>
         <p class="eyebrow">Acesso restrito</p>
         <h2>Entrar no painel do TI</h2>
-        <p>Somente usuarios autorizados conseguem ver e atualizar chamados.</p>
+        <p>Somente usuarios autorizados do TI do Instituicao Exemplo conseguem ver e atualizar chamados.</p>
       </div>
       <form id="login-form" class="login-form">
         <label>
@@ -39,7 +51,7 @@
       <div>
         <p class="eyebrow">Senha temporaria</p>
         <h2>Escolha uma nova senha</h2>
-        <p>O TI definiu uma senha padrao. Para continuar, crie sua senha definitiva.</p>
+        <p>O TI definiu a senha padrao do TI. Para continuar, crie sua senha definitiva.</p>
       </div>
       <form id="force-password-form" class="login-form">
         <label>
@@ -56,30 +68,122 @@
         <span id="current-user"></span>
         <div class="userbar-actions">
           <button id="profile-toggle" class="icon-button" type="button" aria-label="Meus dados" title="Meus dados">👤</button>
+          <section id="profile-panel" class="profile-card userbar-dropdown hidden">
+            <div class="column-title">
+              <h3>Meus dados</h3>
+              <span>Atualize seus contatos</span>
+            </div>
+            <form id="profile-form" class="ticket-form compact-form">
+              <label>
+                Nome completo
+                <input name="name" type="text" required>
+              </label>
+              <label>
+                Email
+                <input name="email" type="email" required>
+              </label>
+              <label>
+                Celular
+                <input name="phone" type="tel" required>
+              </label>
+              <button type="submit" class="primary">Salvar meus dados</button>
+              <p id="profile-message" class="form-message" role="status"></p>
+            </form>
+          </section>
+          <button class="icon-button panel-toggle advanced-toggle" type="button" data-panel-target="advanced-panel" aria-label="Configuracoes avancadas" title="Configuracoes avancadas">⚙</button>
           <button id="logout-button" type="button">Sair</button>
         </div>
       </div>
-      <section id="profile-panel" class="profile-card hidden">
+      <section id="advanced-panel" class="advanced-panel hidden">
         <div class="column-title">
-          <h3>Meus dados</h3>
-          <span>Atualize seus contatos</span>
+          <h3>Configuracoes avancadas</h3>
+          <span>Dashboards e manutencao do sistema</span>
         </div>
-        <form id="profile-form" class="ticket-form compact-form">
-          <label>
-            Nome completo
-            <input name="name" type="text" required>
-          </label>
-          <label>
-            Email
-            <input name="email" type="email" required>
-          </label>
-          <label>
-            Celular
-            <input name="phone" type="tel" required>
-          </label>
-          <button type="submit" class="primary">Salvar meus dados</button>
-          <p id="profile-message" class="form-message" role="status"></p>
-        </form>
+        <div class="advanced-actions">
+          <button class="panel-toggle" type="button" data-panel-target="analytics-panel">Dashboards</button>
+          <button id="clear-attachments-button" class="danger-button" type="button">Limpar imagens dos chamados</button>
+        </div>
+        <p id="clear-attachments-message" class="form-message" role="status"></p>
+        <section id="analytics-panel" class="analytics-panel hidden">
+          <div class="column-title">
+            <h3>Dashboards</h3>
+            <span>Levantamentos gerais de chamados</span>
+          </div>
+
+          <div class="analytics-filters">
+            <label>
+              Periodo
+              <select id="analytics-period">
+                <option value="all">Geral</option>
+                <option value="day">Dia especifico</option>
+                <option value="week">Semana especifica</option>
+                <option value="month">Mes especifico</option>
+              </select>
+            </label>
+            <label id="analytics-day-field" class="hidden">
+              Dia
+              <input id="analytics-day" type="date">
+            </label>
+            <label id="analytics-week-field" class="hidden">
+              Semana
+              <input id="analytics-week" type="week">
+            </label>
+            <label id="analytics-month-field" class="hidden">
+              Mes
+              <input id="analytics-month" type="month">
+            </label>
+          </div>
+
+          <div class="analytics-grid">
+            <article class="analytics-card">
+              <div class="analytics-head">
+                <div>
+                  <p class="eyebrow">Funcionarios</p>
+                  <h4>Solicitacoes abertas</h4>
+                </div>
+                <strong id="employee-total">0</strong>
+              </div>
+              <div class="chart-grid">
+                <div>
+                  <h5>Tipos mais recorrentes</h5>
+                  <div id="employee-type-pie" class="pie-chart"></div>
+                  <div id="employee-type-list" class="rank-list"></div>
+                </div>
+                <div>
+                  <h5>Contas que mais abriram chamados</h5>
+                  <div id="employee-user-pie" class="pie-chart"></div>
+                  <div id="employee-user-list" class="rank-list"></div>
+                </div>
+              </div>
+            </article>
+
+            <article class="analytics-card">
+              <div class="analytics-head">
+                <div>
+                  <p class="eyebrow">TI</p>
+                  <h4>Chamados movimentados</h4>
+                </div>
+                <strong id="ti-total">0</strong>
+              </div>
+              <div class="chart-grid">
+                <div>
+                  <h5>Movimentados por pessoa</h5>
+                  <div id="ti-person-pie" class="pie-chart"></div>
+                  <div id="ti-person-list" class="rank-list"></div>
+                </div>
+                <div>
+                  <h5>Tipos movimentados por pessoa</h5>
+                  <div id="ti-person-type-list" class="rank-list wide"></div>
+                </div>
+                <div>
+                  <h5>Situacao dos chamados movimentados</h5>
+                  <div id="ti-status-pie" class="pie-chart"></div>
+                  <div id="ti-status-list" class="rank-list"></div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
       </section>
       <div class="panel-heading">
         <div>
@@ -113,66 +217,6 @@
 
       <div class="admin-actions">
         <div class="admin-control">
-          <button class="panel-toggle" type="button" data-panel-target="analytics-panel">Dashboards</button>
-          <section id="analytics-panel" class="analytics-panel hidden">
-            <div class="column-title">
-              <h3>Dashboards</h3>
-              <span>Levantamentos gerais de chamados</span>
-            </div>
-
-            <div class="analytics-grid">
-              <article class="analytics-card">
-                <div class="analytics-head">
-                  <div>
-                    <p class="eyebrow">Funcionarios</p>
-                    <h4>Solicitacoes abertas</h4>
-                  </div>
-                  <strong id="employee-total">0</strong>
-                </div>
-                <div class="chart-grid">
-                  <div>
-                    <h5>Tipos mais recorrentes</h5>
-                    <div id="employee-type-pie" class="pie-chart"></div>
-                    <div id="employee-type-list" class="rank-list"></div>
-                  </div>
-                  <div>
-                    <h5>Contas que mais abriram chamados</h5>
-                    <div id="employee-user-pie" class="pie-chart"></div>
-                    <div id="employee-user-list" class="rank-list"></div>
-                  </div>
-                </div>
-              </article>
-
-              <article class="analytics-card">
-                <div class="analytics-head">
-                  <div>
-                    <p class="eyebrow">TI</p>
-                    <h4>Chamados movimentados</h4>
-                  </div>
-                  <strong id="ti-total">0</strong>
-                </div>
-                <div class="chart-grid">
-                  <div>
-                    <h5>Movimentados por pessoa</h5>
-                    <div id="ti-person-pie" class="pie-chart"></div>
-                    <div id="ti-person-list" class="rank-list"></div>
-                  </div>
-                  <div>
-                    <h5>Tipos movimentados por pessoa</h5>
-                    <div id="ti-person-type-list" class="rank-list wide"></div>
-                  </div>
-                  <div>
-                    <h5>Situacao dos chamados movimentados</h5>
-                    <div id="ti-status-pie" class="pie-chart"></div>
-                    <div id="ti-status-list" class="rank-list"></div>
-                  </div>
-                </div>
-              </article>
-            </div>
-          </section>
-        </div>
-
-        <div class="admin-control">
           <button class="panel-toggle" type="button" data-panel-target="users-panel">Usuarios</button>
           <section id="users-panel" class="users-panel hidden">
             <div class="column-title">
@@ -198,7 +242,7 @@
               </label>
               <label>
                 Senha inicial
-                <input name="password" type="text" value="Hospital@123" required>
+                <input name="password" type="text" value="Chamados@123" required>
               </label>
               <label>
                 Tipo de usuario
@@ -227,9 +271,62 @@
           <section id="reset-panel" class="users-panel hidden">
             <div class="column-title">
               <h3>Pedidos de nova senha</h3>
-              <span>Senha padrao: Hospital@123</span>
+              <span>Senha padrao: Chamados@123</span>
             </div>
             <div id="reset-request-list" class="user-list"></div>
+          </section>
+        </div>
+
+        <div class="admin-control">
+          <button class="panel-toggle" type="button" data-panel-target="computers-panel">Computadores</button>
+          <section id="computers-panel" class="users-panel hidden">
+            <div class="column-title">
+              <h3>Inventario de computadores</h3>
+              <span>Patrimonio, AnyDesk, sistema e localizacao</span>
+            </div>
+            <form id="computer-form" class="ticket-form compact-form">
+              <label>
+                Numero de patrimonio
+                <input name="patrimonio" type="text" required placeholder="Ex: PAT-1234">
+              </label>
+              <label>
+                AnyDesk
+                <input name="anydesk" type="text" placeholder="Ex: 123 456 789">
+              </label>
+              <label>
+                Sistema operacional
+                <input name="os" type="text" placeholder="Ex: Windows 11 Pro">
+              </label>
+              <label>
+                Setor
+                <input name="sector" type="text" required placeholder="Ex: Recepcao">
+              </label>
+              <label class="span-2">
+                Especificacoes
+                <textarea name="specs" rows="3" placeholder="Processador, memoria, HD/SSD, modelo etc."></textarea>
+              </label>
+              <label class="span-2">
+                Licencas
+                <textarea name="licenses" rows="3" placeholder="Office, Windows, antivirus, sistemas liberados etc."></textarea>
+              </label>
+              <label class="span-2">
+                Localizacao exata
+                <input name="location" type="text" required placeholder="Ex: Sala 02, bancada da direita, maquina da triagem">
+              </label>
+              <label class="span-2">
+                Descricao da maquina
+                <textarea name="description" rows="3" placeholder="Detalhe fisico, usuario principal, observacoes importantes."></textarea>
+              </label>
+              <button type="submit" class="primary">Cadastrar computador</button>
+              <p id="computer-message" class="form-message" role="status"></p>
+            </form>
+            <div class="search-row inline-search">
+              <label>
+                Pesquisar computadores
+                <input id="computer-search" type="search" placeholder="Patrimonio, setor, AnyDesk, sistema ou localizacao">
+              </label>
+            </div>
+            <div id="computer-list" class="user-list"></div>
           </section>
         </div>
       </div>
@@ -245,7 +342,7 @@
         <section class="column">
           <div class="column-title">
             <h3>Chamados abertos</h3>
-            <span>Ainda sem movimentacao do TI</span>
+            <span>Abertos e em andamento</span>
           </div>
           <div id="open-list" class="ticket-list"></div>
         </section>
@@ -263,7 +360,8 @@
   </main>
 
   <footer class="signature">
-    <span>Sistema base desenvolvido por Carvalho</span>
+    <span>Instituicao Exemplo - Cidade/UF</span>
+    <span>Base desenvolvida por Riicardu5</span>
     <span>Atualizacao automatica a cada 15 segundos</span>
   </footer>
 
@@ -285,6 +383,6 @@
     </article>
   </template>
 
-  <script src="app.js?v=20260601-11"></script>
+  <script src="app.js?v=20260603-22"></script>
 </body>
 </html>

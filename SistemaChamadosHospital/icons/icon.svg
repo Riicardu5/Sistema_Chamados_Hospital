@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#005f34"/>
+  <path fill="#78b84a" d="M112 174c0-46 36-82 82-82h56v72h-56c-7 0-12 5-12 12v160c0 7 5 12 12 12h56v72h-56c-46 0-82-36-82-82V174z"/>
+  <path fill="#ffffff" d="M206 220h100v72H206z"/>
+  <path fill="#a51f3c" d="M262 92h56c46 0 82 36 82 82v22h-72v-20c0-7-5-12-12-12h-54V92zm0 256h54c7 0 12-5 12-12v-20h72v22c0 46-36 82-82 82h-56v-72z"/>
+  <text x="256" y="472" text-anchor="middle" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="46" font-weight="800">TI</text>
+</svg>

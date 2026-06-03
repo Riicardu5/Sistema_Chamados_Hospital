@@ -1,0 +1,45 @@
+{
+  "name": "Chamados TI TI",
+  "short_name": "Chamados TI",
+  "description": "Central generica de chamados de TI",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#edf4ef",
+  "theme_color": "#005f34",
+  "orientation": "portrait",
+  "shortcuts": [
+    {
+      "name": "Abrir chamado",
+      "short_name": "Chamado",
+      "url": "/index.html",
+      "icons": [
+        {
+          "src": "/icons/icon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Painel do TI",
+      "short_name": "Painel TI",
+      "url": "/painel.html",
+      "icons": [
+        {
+          "src": "/icons/icon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

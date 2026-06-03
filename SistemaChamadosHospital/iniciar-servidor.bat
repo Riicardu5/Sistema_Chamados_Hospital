@@ -1,5 +1,5 @@
 @echo off
-title Chamados TI - Hospital
+title Chamados TI - Generico
 cd /d "%~dp0"
 echo.
 echo Servidor de chamados iniciado.

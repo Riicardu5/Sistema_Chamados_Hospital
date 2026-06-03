@@ -1,4 +1,4 @@
-const http = require("http");
+﻿const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
@@ -6,10 +6,13 @@ const crypto = require("crypto");
 const PORT = 8765;
 const PUBLIC_DIR = __dirname;
 const DATA_DIR = path.join(__dirname, "data");
+const UPLOAD_DIR = path.join(__dirname, "uploads");
 const TICKETS_FILE = path.join(DATA_DIR, "tickets.json");
 const USERS_FILE = path.join(DATA_DIR, "users.json");
 const RESET_REQUESTS_FILE = path.join(DATA_DIR, "reset-requests.json");
-const DEFAULT_RESET_PASSWORD = "Hospital@123";
+const COMPUTERS_FILE = path.join(DATA_DIR, "computers.json");
+const DEFAULT_RESET_PASSWORD = "Chamados@123";
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 const sessions = new Map();
 
@@ -18,6 +21,13 @@ const MIME_TYPES = {
   ".css": "text/css; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
   ".json": "application/json; charset=utf-8",
+  ".webmanifest": "application/manifest+json; charset=utf-8",
+  ".svg": "image/svg+xml; charset=utf-8",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp",
+  ".gif": "image/gif",
 };
 
 const VALID_STATUSES = new Set([
@@ -30,8 +40,10 @@ const VALID_STATUSES = new Set([
 
 function ensureDataFiles() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
+  if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR);
   if (!fs.existsSync(TICKETS_FILE)) fs.writeFileSync(TICKETS_FILE, "[]", "utf8");
   if (!fs.existsSync(RESET_REQUESTS_FILE)) fs.writeFileSync(RESET_REQUESTS_FILE, "[]", "utf8");
+  if (!fs.existsSync(COMPUTERS_FILE)) fs.writeFileSync(COMPUTERS_FILE, "[]", "utf8");
   if (!fs.existsSync(USERS_FILE)) {
     fs.writeFileSync(USERS_FILE, JSON.stringify(seedUsers(), null, 2), "utf8");
   }
@@ -44,7 +56,7 @@ function seedUsers() {
       username: "funcionario",
       password: "1234",
       name: "Usuario Teste",
-      email: "funcionario@hospital.local",
+      email: "funcionario@exemplo.local",
       phone: "(00) 00000-0000",
       role: "user",
       mustChangePassword: false,
@@ -54,7 +66,7 @@ function seedUsers() {
       username: "ti",
       password: "1234",
       name: "Equipe TI",
-      email: "ti@hospital.local",
+      email: "ti@exemplo.local",
       phone: "(00) 00000-0000",
       role: "ti",
       mustChangePassword: false,
@@ -86,6 +98,10 @@ function readUsers() {
 
 function readResetRequests() {
   return readJson(RESET_REQUESTS_FILE);
+}
+
+function readComputers() {
+  return readJson(COMPUTERS_FILE);
 }
 
 function publicUser(user) {
@@ -121,6 +137,129 @@ function readBody(request) {
     request.on("end", () => resolve(body ? JSON.parse(body) : {}));
     request.on("error", reject);
   });
+}
+
+function readRawBody(request, maxBytes = MAX_UPLOAD_BYTES + 200_000) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let total = 0;
+
+    request.on("data", (chunk) => {
+      total += chunk.length;
+      if (total > maxBytes) {
+        request.destroy();
+        reject(new Error("Arquivo muito grande"));
+        return;
+      }
+      chunks.push(chunk);
+    });
+
+    request.on("end", () => resolve(Buffer.concat(chunks)));
+    request.on("error", reject);
+  });
+}
+
+function parseMultipart(request, bodyBuffer) {
+  const contentType = request.headers["content-type"] || "";
+  const boundary = contentType.match(/boundary=(.+)$/)?.[1];
+  if (!boundary) return { fields: {}, files: {} };
+
+  const raw = bodyBuffer.toString("latin1");
+  const parts = raw.split(`--${boundary}`).slice(1, -1);
+  const fields = {};
+  const files = {};
+
+  parts.forEach((part) => {
+    const normalized = part.replace(/^\r\n/, "").replace(/\r\n$/, "");
+    const separatorIndex = normalized.indexOf("\r\n\r\n");
+    if (separatorIndex === -1) return;
+
+    const headerText = normalized.slice(0, separatorIndex);
+    const contentText = normalized.slice(separatorIndex + 4);
+    const name = headerText.match(/name="([^"]+)"/)?.[1];
+    const fileName = headerText.match(/filename="([^"]*)"/)?.[1];
+    const mimeType = headerText.match(/Content-Type:\s*([^\r\n]+)/i)?.[1] || "";
+    if (!name) return;
+
+    const content = Buffer.from(contentText, "latin1");
+    if (fileName) {
+      files[name] = { fileName, mimeType, content };
+      return;
+    }
+
+    fields[name] = content.toString("utf8").trim();
+  });
+
+  return { fields, files };
+}
+
+function getImageExtension(mimeType, fileName) {
+  const allowedByMime = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/webp": ".webp",
+    "image/gif": ".gif",
+  };
+
+  if (allowedByMime[mimeType]) return allowedByMime[mimeType];
+
+  const originalExt = path.extname(fileName || "").toLowerCase();
+  return [".jpg", ".jpeg", ".png", ".webp", ".gif"].includes(originalExt) ? originalExt : "";
+}
+
+function saveTicketImage(ticketId, file) {
+  if (!file || !file.content?.length) return null;
+  if (!file.mimeType.startsWith("image/")) {
+    throw new Error("Envie apenas imagem");
+  }
+
+  if (file.content.length > MAX_UPLOAD_BYTES) {
+    throw new Error("Imagem maior que 5 MB");
+  }
+
+  const extension = getImageExtension(file.mimeType, file.fileName);
+  if (!extension) {
+    throw new Error("Formato de imagem nao permitido");
+  }
+
+  const storedName = `${ticketId}${extension}`;
+  const storedPath = path.join(UPLOAD_DIR, storedName);
+  fs.writeFileSync(storedPath, file.content);
+
+  return {
+    fileName: file.fileName,
+    url: `/uploads/${storedName}`,
+    mimeType: file.mimeType,
+    size: file.content.length,
+  };
+}
+
+function clearTicketImages() {
+  ensureDataFiles();
+  const files = fs.readdirSync(UPLOAD_DIR);
+  let deletedFiles = 0;
+
+  files.forEach((fileName) => {
+    if (fileName === ".gitkeep") return;
+    const filePath = path.resolve(UPLOAD_DIR, fileName);
+    if (!filePath.startsWith(path.resolve(UPLOAD_DIR))) return;
+    const stat = fs.statSync(filePath);
+    if (!stat.isFile()) return;
+    fs.unlinkSync(filePath);
+    deletedFiles += 1;
+  });
+
+  const tickets = readTickets();
+  const updatedTickets = tickets.map((ticket) => ({
+    ...ticket,
+    attachment: null,
+  }));
+  writeTickets(updatedTickets);
+
+  return {
+    deletedFiles,
+    updatedTickets: updatedTickets.length,
+  };
 }
 
 function getSessionUser(request) {
@@ -382,9 +521,69 @@ async function handleApi(request, response, url) {
     return;
   }
 
+  if (request.method === "GET" && url.pathname === "/api/computers") {
+    if (!requireTi(request, response)) return;
+    sendJson(response, 200, readComputers());
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/computers") {
+    const tiUser = requireTi(request, response);
+    if (!tiUser) return;
+
+    const body = await readBody(request);
+    const now = new Date().toISOString();
+    const computer = {
+      id: crypto.randomUUID(),
+      patrimonio: String(body.patrimonio || "").trim(),
+      anydesk: String(body.anydesk || "").trim(),
+      specs: String(body.specs || "").trim(),
+      os: String(body.os || "").trim(),
+      licenses: String(body.licenses || "").trim(),
+      sector: String(body.sector || "").trim(),
+      location: String(body.location || "").trim(),
+      description: String(body.description || "").trim(),
+      createdAt: now,
+      updatedAt: now,
+      registeredBy: publicUser(tiUser),
+    };
+
+    if (!computer.patrimonio || !computer.sector || !computer.location) {
+      sendJson(response, 400, { error: "Informe patrimonio, setor e localizacao da maquina" });
+      return;
+    }
+
+    const computers = readComputers();
+    if (computers.some((item) => item.patrimonio.toLowerCase() === computer.patrimonio.toLowerCase())) {
+      sendJson(response, 409, { error: "Ja existe computador com esse patrimonio" });
+      return;
+    }
+
+    computers.unshift(computer);
+    writeJson(COMPUTERS_FILE, computers);
+    sendJson(response, 201, computers);
+    return;
+  }
+
+  const deleteComputerMatch = url.pathname.match(/^\/api\/computers\/([^/]+)$/);
+  if (request.method === "DELETE" && deleteComputerMatch) {
+    if (!requireTi(request, response)) return;
+    const computers = readComputers().filter((item) => item.id !== deleteComputerMatch[1]);
+    writeJson(COMPUTERS_FILE, computers);
+    sendJson(response, 200, computers);
+    return;
+  }
+
   if (request.method === "GET" && url.pathname === "/api/tickets") {
     if (!requireTi(request, response)) return;
     sendJson(response, 200, readTickets());
+    return;
+  }
+
+  if (request.method === "DELETE" && url.pathname === "/api/attachments") {
+    if (!requireTi(request, response)) return;
+    const result = clearTicketImages();
+    sendJson(response, 200, result);
     return;
   }
 
@@ -400,11 +599,24 @@ async function handleApi(request, response, url) {
     const user = requireAuth(request, response);
     if (!user) return;
 
-    const body = await readBody(request);
+    let body = {};
+    let imageFile = null;
+    const contentType = request.headers["content-type"] || "";
+
+    if (contentType.startsWith("multipart/form-data")) {
+      const rawBody = await readRawBody(request);
+      const parsed = parseMultipart(request, rawBody);
+      body = parsed.fields;
+      imageFile = parsed.files.image || null;
+    } else {
+      body = await readBody(request);
+    }
+
     const tickets = readTickets();
     const now = new Date().toISOString();
+    const ticketId = crypto.randomUUID();
     const ticket = {
-      id: crypto.randomUUID(),
+      id: ticketId,
       ticketNumber: nextTicketNumber(tickets),
       requester: user.name,
       requesterEmail: user.email || "",
@@ -416,6 +628,9 @@ async function handleApi(request, response, url) {
       status: "open",
       openedBy: publicUser(user),
       completedBy: null,
+      attachment: null,
+      statusNote: "",
+      statusHistory: [],
       createdAt: now,
       statusUpdatedAt: now,
       completedAt: null,
@@ -423,6 +638,18 @@ async function handleApi(request, response, url) {
 
     if (!ticket.department || !ticket.description) {
       sendJson(response, 400, { error: "Dados obrigatorios ausentes" });
+      return;
+    }
+
+    if (ticket.priority === "Demanda" && user.role !== "ti") {
+      sendJson(response, 403, { error: "Somente usuarios do TI podem abrir chamado como Demanda" });
+      return;
+    }
+
+    try {
+      ticket.attachment = saveTicketImage(ticket.id, imageFile);
+    } catch (error) {
+      sendJson(response, 400, { error: error.message });
       return;
     }
 
@@ -439,6 +666,7 @@ async function handleApi(request, response, url) {
 
     const body = await readBody(request);
     const status = String(body.status || "");
+    const note = String(body.note || "").trim();
     if (!VALID_STATUSES.has(status)) {
       sendJson(response, 400, { error: "Status invalido" });
       return;
@@ -452,6 +680,16 @@ async function handleApi(request, response, url) {
         status,
         statusUpdatedAt: now,
         statusUpdatedBy: publicUser(user),
+        statusNote: note,
+        statusHistory: [
+          ...(Array.isArray(ticket.statusHistory) ? ticket.statusHistory : []),
+          {
+            status,
+            note,
+            updatedAt: now,
+            updatedBy: publicUser(user),
+          },
+        ],
         completedBy: status === "done" ? publicUser(user) : null,
         completedAt: status === "done" ? now : null,
       };
@@ -561,5 +799,6 @@ server.listen(PORT, "0.0.0.0", () => {
   ensureDataFiles();
   console.log(`Servidor rodando em http://localhost:${PORT}`);
   console.log("Usuarios de teste: funcionario/1234 e ti/1234");
+  console.log("Senha padrao para reset/criacao pelo TI: Chamados@123");
   console.log("Na rede local, use o IP deste computador seguido da porta 8765.");
 });

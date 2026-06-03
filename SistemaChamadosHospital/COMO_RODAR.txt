@@ -1,4 +1,4 @@
-COMO RODAR O SISTEMA DE CHAMADOS NA REDE LOCAL
+﻿COMO RODAR O SISTEMA DE CHAMADOS NA REDE LOCAL
 
 1. Escolha um computador para ser o servidor.
    Esse computador precisa ficar ligado enquanto o sistema estiver em uso.
@@ -80,7 +80,7 @@ Esse pedido aparece no painel do TI em:
   Pedidos de nova senha
 
 Quando o TI libera, a senha temporaria fica:
-  Hospital@123
+  Chamados@123
 
 Ao entrar com essa senha, o usuario e obrigado a escolher uma nova senha.
 
@@ -94,6 +94,11 @@ Ali o TI pode criar:
 Todo usuario criado pelo TI precisa trocar a senha no primeiro login.
 Tambem existe busca de usuarios por nome, usuario, email ou celular.
 O TI pode deletar usuarios que nao devem mais acessar o sistema.
+
+CONTATO DE SUPORTE TI
+
+Caso o sistema esteja indisponivel ou o funcionario nao consiga abrir chamado:
+  suporte@empresa.com.br
 
 PESQUISA NO PAINEL
 

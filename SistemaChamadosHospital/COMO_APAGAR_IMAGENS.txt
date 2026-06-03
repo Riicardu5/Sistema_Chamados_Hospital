@@ -1,0 +1,46 @@
+COMO FUNCIONAM AS FOTOS DOS CHAMADOS
+
+As fotos anexadas aos chamados ficam salvas na pasta:
+
+  outputs/uploads
+
+O arquivo data/tickets.json nao guarda a imagem inteira. Ele guarda apenas o link da foto dentro de cada chamado.
+Isso evita que o banco de chamados fique gigante.
+
+
+COMO APAGAR AS IMAGENS NO FUTURO
+
+Opcao 1 - Pelo painel do TI
+
+1. Entre no painel do TI.
+2. Clique na engrenagem de configuracoes avancadas.
+3. Clique em "Limpar imagens dos chamados".
+4. Confirme a acao.
+
+O sistema apaga as imagens da pasta uploads e remove a referencia delas dos chamados.
+Os chamados continuam salvos normalmente.
+
+
+Opcao 2 - Apagar manualmente as fotos antigas
+
+1. Pare o servidor do sistema.
+2. Abra a pasta outputs/uploads.
+3. Apague as imagens que nao quer mais guardar.
+4. Ligue o servidor de novo.
+
+Importante: o chamado continua existindo, mas o botao "Ver foto anexada" daquele chamado pode apontar para uma imagem que nao existe mais.
+
+
+Opcao 3 - Resetar todas as imagens manualmente
+
+1. Pare o servidor.
+2. Apague tudo dentro da pasta outputs/uploads.
+3. Se quiser deixar o historico mais limpo, remova tambem o campo "attachment" dos chamados antigos dentro de data/tickets.json.
+
+Na duvida, antes de apagar:
+
+1. Copie a pasta outputs/data.
+2. Copie a pasta outputs/uploads.
+3. Guarde essas copias em outro lugar.
+
+Assim voce consegue voltar atras se apagar algo sem querer.
